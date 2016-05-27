@@ -101,8 +101,11 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 		values : [],
 		type : null,
 		ns: this.targetNSIndex,
-		np : true
+		np : true,
+		documentation : null
 	};
+
+	definition.documentation = this.getDocumentation(node);
 	
 	if (nameParts && nameParts.localName)
 		definition.name = nameParts.localName;
@@ -540,6 +543,24 @@ SchemaProcessor.prototype.getChildren = function(node, childName, nameAttribute)
 			children.push(child);
 	}
 	return children;
+}
+
+// Retrieve the documentation of an annotation nodeName.
+// Clean-up extra white space for tidy documentation.
+SchemaProcessor.prototype.getDocumentation = function(node) {
+	var childNodes = node.childNodes;
+	for (var index in childNodes) {
+		var child = childNodes[index];
+		if(child.localName == 'annotation') {
+			for (var i in  child.childNodes) {
+				var baby = child.childNodes[i];
+				if(baby.localName == 'documentation') {
+					return baby.innerHTML.trim().replace(/\s+/g, ' ');
+				}
+			}
+		}
+	}
+	return null;	// No documentation
 }
 
 //Namespace aware check to see if a definition already contains parent child element
