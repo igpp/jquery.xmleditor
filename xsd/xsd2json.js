@@ -1,5 +1,4 @@
-;var Xsd2Json = function() {
-
+;var Xsd2Json = function() { 
 /*
 
     Copyright 2008 The University of North Carolina at Chapel Hill
@@ -29,7 +28,6 @@
  * 
  * @author Ben Pennell
  */
-
 function Xsd2Json(originatingXsdName, options) {
 	var defaults = {
 		schemaURI: "",
@@ -112,9 +110,9 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
  * 
  * @author bbpennel
  */
-
 function SchemaManager(originatingXsdName, options) {
 	var defaults = {
+			rootElement : undefined,
 			globalNamespaces : {}
 	};
 	
@@ -190,6 +188,19 @@ SchemaManager.prototype.importAjax = function(url, callback, failedLocalAttempt)
 	});
 };
 
+SchemaManager.prototype.importFile = function(file, callback) {
+	var self = this;
+
+	if( ! FileReader) alert("FileReader not available. Unable to load local files.");
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var contents = reader.result;
+		var xsdDocument = $.parseXML(content).documentElement;
+		callback.call(self, xsdDocument, url);
+	};
+	reader.readAsText(new File(schemaPath));
+};
+
 SchemaManager.prototype.computeSchemaLocation = function(url, parentSchema) {
 	if (!url)
 		return null;
@@ -241,6 +252,7 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		// Process imported schemas before processing this one
 		this.processImports(schema);
 		this.processIncludes(schema);
+		this.processOverrides(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -284,6 +296,7 @@ SchemaManager.prototype.includeSchema = function(schemaLocation, namespaceIndex)
 		// Process imported schemas before processing this one
 		this.processImports(schema);
 		this.processIncludes(schema);
+		this.processOverrides(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -304,23 +317,52 @@ SchemaManager.prototype.processIncludes = function(schema) {
 	}
 };
 
-SchemaManager.prototype.setOriginatingRoot = function() {
-	this.originatingRoot = {
-			schema : true,
-			ns : this.originatingSchema.targetNSIndex,
-			namespaces : [],
-			elements : [],
-			np : true
-		};
+// Override does an implicit include
+SchemaManager.prototype.processOverrides = function(schema) {
+	// Load all of the imported schemas
 	
-	for (var ns in this.imports) {
-		var importSet = this.imports[ns];
+	var includes = schema.getChildren(schema.xsd, 'override');
+
+	for (var index in includes) {
+		var includeNode = includes[index];
+		var schemaLocation =
+			this.computeSchemaLocation(includeNode.getAttribute("schemaLocation"),
+					schema);
+		this.includeSchema(schemaLocation, schema.targetNSIndex);
+	}
+};
+
+SchemaManager.prototype.setOriginatingRoot = function() {
+
+	// Select root element if one is specified
+	if (this.options.rootElement != null) {
+		this.originatingRoot = this.originatingSchema.root;
 		
-		for (var index in importSet) {
-			var schema = importSet[index];
+		for (var index in this.originatingRoot.elements) {
+			var topLevelElement = this.originatingRoot.elements[index];
 			
-			for (var elIndex in schema.root.elements) {
-				this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+			if (this.options.rootElement != topLevelElement.name) {
+				this.originatingRoot = topLevelElement;
+			}
+		}
+	} else {
+		this.originatingRoot = {
+				schema : true,
+				ns : this.originatingSchema.targetNSIndex,
+				namespaces : [],
+				elements : [],
+				np : true
+			};
+		
+		for (var ns in this.imports) {
+			var importSet = this.imports[ns];
+			
+			for (var index in importSet) {
+				var schema = importSet[index];
+				
+				for (var elIndex in schema.root.elements) {
+					this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+				}
 			}
 		}
 	}
@@ -501,7 +543,6 @@ SchemaManager.prototype.getNamespaceUri = function(index) {
  * xsdDocument XML document representaton of the schema document to be processed
  * xsdManager schema manager which this processor belongs to
  */
-
 function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	
 	this.xsd = xsdDocument;
@@ -594,8 +635,11 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 		values : [],
 		type : null,
 		ns: this.targetNSIndex,
-		np : true
+		np : true,
+		documentation : null
 	};
+
+	definition.documentation = this.getDocumentation(node);
 	
 	if (nameParts && nameParts.localName)
 		definition.name = nameParts.localName;
@@ -679,6 +723,8 @@ SchemaProcessor.prototype.build_schema = function(node) {
 				child.localName == 'attribute' || child.localName == 'complexType' ||
 				child.localName == 'group' || child.localName == 'attributeGroup') {
 			this.buildTopLevel(child, definition);
+		} else if (child.localName == 'override') {
+			self.build_schema(child);
 		}
 	}
 	return definition;
@@ -1035,6 +1081,24 @@ SchemaProcessor.prototype.getChildren = function(node, childName, nameAttribute)
 	return children;
 }
 
+// Retrieve the documentation of an annotation nodeName.
+// Clean-up extra white space for tidy documentation.
+SchemaProcessor.prototype.getDocumentation = function(node) {
+	var childNodes = node.childNodes;
+	for (var index in childNodes) {
+		var child = childNodes[index];
+		if(child.localName == 'annotation') {
+			for (var i in  child.childNodes) {
+				var baby = child.childNodes[i];
+				if(baby.localName == 'documentation') {
+					return baby.innerHTML.trim().replace(/\s+/g, ' ');
+				}
+			}
+		}
+	}
+	return null;	// No documentation
+}
+
 //Namespace aware check to see if a definition already contains parent child element
 SchemaProcessor.prototype.containsChild = function(definition, child) {
 	if (definition.elements) {
@@ -1084,4 +1148,4 @@ SchemaProcessor.prototype.getLocalNamespacePrefix = function(namespaceUri) {
 	}
 	return null;
 };
-; return Xsd2Json;}.call();
+; return Xsd2Json;}.call(); 

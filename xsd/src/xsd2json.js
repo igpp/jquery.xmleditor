@@ -31,7 +31,8 @@
  */
 function Xsd2Json(originatingXsdName, options) {
 	var defaults = {
-		schemaURI: ""
+		schemaURI: "",
+		rootElement: null
 	};
 	this.options = $.extend({}, defaults, options);
 	
