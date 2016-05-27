@@ -189,6 +189,8 @@ SchemaProcessor.prototype.build_schema = function(node) {
 				child.localName == 'attribute' || child.localName == 'complexType' ||
 				child.localName == 'group' || child.localName == 'attributeGroup') {
 			this.buildTopLevel(child, definition);
+		} else if (child.localName == 'override') {
+			self.build_schema(child);
 		}
 	}
 	return definition;

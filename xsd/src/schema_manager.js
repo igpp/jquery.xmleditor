@@ -6,6 +6,7 @@
  */
 function SchemaManager(originatingXsdName, options) {
 	var defaults = {
+			rootElement : undefined,
 			globalNamespaces : {}
 	};
 	
@@ -132,6 +133,7 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		// Process imported schemas before processing this one
 		this.processImports(schema);
 		this.processIncludes(schema);
+		this.processOverrides(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -175,6 +177,7 @@ SchemaManager.prototype.includeSchema = function(schemaLocation, namespaceIndex)
 		// Process imported schemas before processing this one
 		this.processImports(schema);
 		this.processIncludes(schema);
+		this.processOverrides(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -195,23 +198,52 @@ SchemaManager.prototype.processIncludes = function(schema) {
 	}
 };
 
-SchemaManager.prototype.setOriginatingRoot = function() {
-	this.originatingRoot = {
-			schema : true,
-			ns : this.originatingSchema.targetNSIndex,
-			namespaces : [],
-			elements : [],
-			np : true
-		};
+// Override does an implicit include
+SchemaManager.prototype.processOverrides = function(schema) {
+	// Load all of the imported schemas
 	
-	for (var ns in this.imports) {
-		var importSet = this.imports[ns];
+	var includes = schema.getChildren(schema.xsd, 'override');
+
+	for (var index in includes) {
+		var includeNode = includes[index];
+		var schemaLocation =
+			this.computeSchemaLocation(includeNode.getAttribute("schemaLocation"),
+					schema);
+		this.includeSchema(schemaLocation, schema.targetNSIndex);
+	}
+};
+
+SchemaManager.prototype.setOriginatingRoot = function() {
+
+	// Select root element if one is specified
+	if (this.options.rootElement != null) {
+		this.originatingRoot = this.originatingSchema.root;
 		
-		for (var index in importSet) {
-			var schema = importSet[index];
+		for (var index in this.originatingRoot.elements) {
+			var topLevelElement = this.originatingRoot.elements[index];
 			
-			for (var elIndex in schema.root.elements) {
-				this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+			if (this.options.rootElement != topLevelElement.name) {
+				this.originatingRoot = topLevelElement;
+			}
+		}
+	} else {
+		this.originatingRoot = {
+				schema : true,
+				ns : this.originatingSchema.targetNSIndex,
+				namespaces : [],
+				elements : [],
+				np : true
+			};
+		
+		for (var ns in this.imports) {
+			var importSet = this.imports[ns];
+			
+			for (var index in importSet) {
+				var schema = importSet[index];
+				
+				for (var elIndex in schema.root.elements) {
+					this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+				}
 			}
 		}
 	}
