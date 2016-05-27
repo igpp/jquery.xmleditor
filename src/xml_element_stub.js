@@ -141,7 +141,7 @@ XMLElementStub.prototype.addTopActions = function () {
 	var self = this;
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
-	
+
 	var deleteButton = document.createElement('span');
 	deleteButton.className = 'xml_delete';
 	deleteButton.id = this.domNodeID + '_del';

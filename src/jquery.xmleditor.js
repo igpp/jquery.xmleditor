@@ -78,6 +78,9 @@ $.widget( "xml.xmlEditor", {
 	options: {
 		// Schema object to be used
 		schema: null,
+		// Schema name (for display)
+		schemaName: null,
+		
 		// Whether or not to attempt to load the schema in a worker thread, if available
 		loadSchemaAsychronously: true,
 		// Path to directory containing cycle.js, needed for loadSchemaAsychronously
@@ -86,6 +89,7 @@ $.widget( "xml.xmlEditor", {
 		ajaxOptions : {
 			xmlUploadPath: null,
 			xmlRetrievalPath: null,
+			xmlFile: null,
 			xmlRetrievalParams : null
 		},
 
@@ -102,15 +106,30 @@ $.widget( "xml.xmlEditor", {
 		submitErrorHandler : null,
 
 		submitButtonConfigs : null,
+		
+		// Setting for buttons to create new documents
+		newLabel : "New",
+		newButtonConfigs : null,
+		
+		// Settings for import button
+		importLabel : "Open",
+		importButtonConfigs : null,
+		importChangeHandler : null,
+		
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
+		
+		// Allow importing (uploading) of files into the editor
+		allowImport : true,
+		
 		// Title for the document, displayed in the header
-		documentTitle : null,
+		documentTitle : "",
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
-		addElementMenuHeaderText : 'Add Subelement',
-		xmlEditorLabel : 'XML',
+		addElementMenuHeaderText : 'Add Element',
+		xmlEditorLabel : 'Form',
 		textEditorLabel : 'Text',
+		exportLabel : "Save",
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
@@ -121,15 +140,19 @@ $.widget( "xml.xmlEditor", {
 		// Requires jquery.autosize, defaults to false if plugin isn't detected
 		expandingTextAreas: true,
 		
-		// Pretty formatting of XML output.  Requires vkbeauty.js, defaults to false is not available
+		// Pretty formatting of XML output.  Requires vkbeauty.js, defaults to false if not available
 		prettyXML : true,
 		// Number of history states held for the undo feature
 		undoHistorySize: 20,
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
-		enforceOccurs: false,
+		enforceOccurs: true,
 		prependNewElements: false,
 		autocomplete: true,
+		
+		// Customization options
+		showAddNodesMenu: false,	// Whether to show "Node" menu in GUI
+		allowTextNodeDelete: false,	// Whether to show delete button on text nodes
 		
 		targetNS: null
 	},
@@ -170,6 +193,9 @@ $.widget( "xml.xmlEditor", {
 		// Flag indicating if the editor was initialized on a text area that will need to be updated
 		this.isTextAreaEditor = false;
 
+		// Flag indicating editor is ready
+		this.ready = false;
+		
 		var url = document.location.href;
 		var index = url.lastIndexOf("/");
 		if (index != -1)
@@ -221,18 +247,43 @@ $.widget( "xml.xmlEditor", {
 	},
  
 	_init: function() {
+		if (this.options.newButtonConfigs) {
+			// User provided button configuration
+			this.newButtonConfigs = this.options.newButtonConfigs;
+		} else {
+			// Simple button configuration, generate defaults
+			this.newButtonConfigs = [{
+				label : this.options.newLabel,
+				onSubmit : this.loadDocument,
+				disabled : false
+			}];
+		}
+		
+		if (this.options.importButtonConfigs) {
+			// User provided button configuration
+			this.importButtonConfigs = this.options.importButtonConfigs;
+		} else {
+			// Simple button configuration, generate defaults
+			var importing = this.options.allowImport;
+			
+			this.importButtonConfigs = [{
+				label : this.options.importLabel,
+				onSubmit : importing ? this.importXML : null,
+				disabled : false
+			}];
+		}
+		
 		if (this.options.submitButtonConfigs) {
 			// User provided button configuration
 			this.submitButtonConfigs = this.options.submitButtonConfigs;
 		} else {
 			// Simple button configuration, generate defaults
 			var exporting = !this.options.ajaxOptions.xmlUploadPath;
-
-			// Either an upload button or an export button
+			
 			this.submitButtonConfigs = [{
 				url : this.options.ajaxOptions.xmlUploadPath,
-				label : exporting? "Export" : "Submit changes",
-				onSubmit : exporting? this.exportXML : null,
+				label : exporting? this.options.exportLabel : "Submit changes",
+				onSubmit : exporting ? this.exportXML : null,
 				disabled : typeof(Blob) === undefined && exporting
 			}];
 		}
@@ -321,7 +372,7 @@ $.widget( "xml.xmlEditor", {
 		this.loadVocabularies(this.options.vocabularyConfigs);
 
 		// Start loading the document for editing
-		this.loadDocument(this.options.ajaxOptions, localXMLContent);
+		this.loadDocument(this.options.ajaxOptions, localXMLContent, this.documentTitle);
 	},
 	
 	// Load the schema object
@@ -332,7 +383,7 @@ $.widget( "xml.xmlEditor", {
 			this.schema = schema.apply();
 			self._schemaReady();
 		} else {
-			// Load schema in separate thread for browsers tha support it.  IE10 blocked to avoid security error
+			// Load schema in separate thread for browsers that support it.  IE10 blocked to avoid security error
 			if (this.options.loadSchemaAsychronously && !window.MSBlobBuilder
 					&& typeof(window.URL) !== "undefined" && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
 				var blob = new Blob([
@@ -387,9 +438,13 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	// Load the XML document for editing
-	loadDocument: function(ajaxOptions, localXMLContent) {
+	loadDocument: function(ajaxOptions, localXMLContent, documentTitle) {
 		var self = this;
 
+		self.setDocumentTitle("");
+		if(documentTitle) {
+			self.setDocumentTitle(documentTitle);
+		}
 		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
 			// Load document from the specified path
 			$.ajax({
@@ -408,6 +463,15 @@ $.widget( "xml.xmlEditor", {
 					}
 				}
 			});
+		} else if (ajaxOptions != null && ajaxOptions.xmlFile != null) {
+			if( ! FileReader) alert("FileReader not available. Unable to load local files.");
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var contents = reader.result;
+				console.log(contents);
+				self._documentReady(contents);              
+			};
+			reader.readAsText(ajaxOptions.xmlFile);
 		} else if ($.trim(localXMLContent)) {
 			// Use local content embedded in starting element next
 			this._documentReady(localXMLContent);
@@ -490,7 +554,8 @@ $.widget( "xml.xmlEditor", {
 
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
-		this.constructEditor();
+		if( ! this.ready) 
+			this.constructEditor();
 		this.refreshDisplay();
 		this.activeEditor.selectRoot();
 		// Capture baseline undo state
@@ -506,7 +571,10 @@ $.widget( "xml.xmlEditor", {
 		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
-			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
+			$("<h2 id='document-title' />").html("Editing: " + this.options.documentTitle).appendTo(this.editorHeader);
+		if (this.options.schemaName != null) {
+			$("<span style='float:right' />").html("Schema: " + this.options.schemaName).appendTo(this.editorHeader);
+		}
 		this.menuBar.render(this.editorHeader);
 		editorHeaderBacking.height(this.editorHeader.outerHeight());
 		// Create grouping of header elements that need to be positioned together
@@ -523,12 +591,60 @@ $.widget( "xml.xmlEditor", {
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
-				true, false, true);
+				true, false, true, function(instigator) { // Determine where to place new element
+			var selectedElement = self.guiEditor.selectedElement;
+			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
+				return null;
+			var currentElement = selectedElement;
+			
+			// Find the right element to insert near
+			if( ! currentElement.allowChildren) {	// Then make parent current element
+				currentElement = currentElement.parentElement;
+			}
+			if(currentElement.allowChildren) {	// Look at schema
+				var beforeNames = [];
+				var afterName = null;
+				var beforeName = null;
+				var previousName = null;
+				var schema = currentElement.objectType;
+				// Build up list of names which can proceed the new element
+				for(var i = 0; i < schema.elements.length; i++) {
+					beforeNames.push(schema.elements[i].localName);
+					if(schema.elements[i].localName == instigator.objectType.localName) {
+						break;
+					}
+				}
+				
+				// Scan current document to find last before element
+				var afterElement = null;
+				var elementChild = currentElement.xmlNode[0].firstElementChild;
+				var previousChold = null;
+				while(elementChild != null) {
+					if(beforeNames.indexOf(elementChild.localName) == -1) { // not in list
+						for(var i = 0; i < currentElement.children.length; i++) {
+							if(currentElement.children[i].xmlNode[0] === previousChild) {
+								afterElement = currentElement.children[i];
+								break;
+							}
+						}
+						break;
+					}
+					previousChild = elementChild;
+					elementChild = elementChild.nextElementSibling; 
+				}
+
+				
+				return afterElement;	// If null return at end
+								
+			}
+			return currentElement; // After current
+		});
+
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
-		this.modifyMenu.addNodeMenu(addNodeMenuClass, "Add Nodes", true, false);
+		if(this.options.showAddNodesMenu) this.modifyMenu.addNodeMenu(addNodeMenuClass, "Add Nodes", true, false);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
-				true, true, false, function(target) {
+				true, true, false, function(instigator) {	// determine where to place new element
 			var selectedElement = self.guiEditor.selectedElement;
 			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
 				return null;
@@ -834,7 +950,7 @@ $.widget( "xml.xmlEditor", {
 			return false;
 		}
 		
-		var exportDialog = $("<form><input type='text' class='xml_export_filename' placeholder='file.xml'/><input type='submit' value='Export'/></form>")
+		var exportDialog = $("<form><input type='text' class='xml_export_filename' placeholder='file.xml'/><input type='submit' value='" + this.options.exportLabel + "'/></form>")
 				.dialog({modal: true, dialogClass: 'xml_dialog', resizable : false, title: 'Enter file name', height: 80});
 		var self = this;
 		exportDialog.submit(function(){
@@ -863,6 +979,27 @@ $.widget( "xml.xmlEditor", {
 		});
 	},
 
+	// Import a file
+	importXML: function() {
+		var self = this;
+		
+		if( ! self.options.importChangeHandler) {	// Set handler - do only when first called
+			self.options.importChangeHandler = function(click) {
+				var file = click.target.files[0];
+				var ajaxOptions = {
+					xmlUploadPath: null,
+					xmlFile: file, 
+					xmlRetrievalPath: null, // "examples/spase/spase.xml",
+					xmlRetrievalParams : null
+				};
+				self.loadDocument(ajaxOptions, null, file.name);
+			};
+			$('#import-file-select').change(self.options.importChangeHandler);		
+		}
+		$('#import-file-select').click();	// pop-up file select
+
+	},
+	
 	// Upload the contents of the editor to a path
 	uploadXML: function(config) {
 		if (!config || !config.url) {
@@ -927,6 +1064,10 @@ $.widget( "xml.xmlEditor", {
 		return false;
 	},
 
+	setDocumentTitle: function(title) {
+		$('#document-title').text("Editing: " + title);
+	},
+	
 	// Serializes the provided xml node into a string
 	xml2Str: function(xmlNodeObject) {
 		if (xmlNodeObject == null)
@@ -1086,6 +1227,11 @@ $.widget( "xml.xmlEditor", {
 			
 			if (e.which == 'E'.charCodeAt(0)) {
 				this.exportXML();
+				return false;
+			}
+			
+			if (e.which == 'O'.charCodeAt(0)) {
+				this.importXML();
 				return false;
 			}
 			

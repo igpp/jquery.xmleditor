@@ -19,7 +19,7 @@ function formatXML(element, indent, options) {
 	var whitespace = "";
 	var containsText = false;
 
-	var contents = "";
+	var contents = ""; // would liek it to be "<?xml version=\"1.0\"?>\n", but parser doesn't like it
 	var attrContents = "";
 
 	for (var index in children) {

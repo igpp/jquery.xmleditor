@@ -1,7 +1,12 @@
 function XMLTextNode(textNode, dataType, editor, vocabulary) {
+	var values = null;
+	if(textNode && textNode.values) 
+		values = textNode.values;
+
 	var textType = {
 		text : true,
-		type : dataType
+		type : dataType,
+		values: values
 	};
 
 	this.textNode = textNode;
@@ -74,11 +79,13 @@ XMLTextNode.prototype.render = function(parentElement, prepend) {
 			});
 	}
 
-	this.deleteButton = document.createElement('div');
-	this.deleteButton.className = 'xml_delete';
-	this.deleteButton.appendChild(document.createTextNode('x'));
-	this.domNode.appendChild(this.deleteButton);
-
+	if(this.editor.options.allowTextNodeDelete) {
+		this.deleteButton = document.createElement('div');
+		this.deleteButton.className = 'xml_delete';
+		this.deleteButton.appendChild(document.createTextNode('x'));
+		this.domNode.appendChild(this.deleteButton);
+	}
+	
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 	

@@ -66,7 +66,7 @@ ModifyElementMenu.prototype.initEventHandlers = function() {
 	// Add new child element click event
 	this.menuContent.on('click', 'li', function(event){
 		var relativeTo = (self.getRelativeToFunction)? 
-				self.getRelativeToFunction($(this).data("xml").target) : null;
+				self.getRelativeToFunction($(this).data("xml")) : null;
 		var prepend = self.editor.options.prependNewElements;
 		if (event.shiftKey) prepend = !prepend;
 		self.owner.editor.addChildElementCallback(this, relativeTo, prepend);
@@ -101,18 +101,26 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	this.target = xmlElement;
 	var self = this;
 	var parent = this.target;
+	var target = self.target;
+	var targetElements = this.target.objectType.elements;
 	var choiceList = parent.objectType.choices;
+
+	if(targetElements.length == 0) {	// Show siblings if no elements.
+		parent = parent.parentElement;
+		target = parent;
+		targetElements = parent.objectType.elements;
+	}
 	
 	// Iterate through the child element definitions and generate entries for each
-	if (this.target.objectType.elements) {
-		$.each(this.target.objectType.elements, function(){
+	if (targetElements) {
+		$.each(targetElements, function(){
 			var xmlElement = this;
 			var elName = self.editor.xmlState.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
 			var addButton = $("<li/>").attr({
 				title : 'Add ' + elName
 			}).html(elName)
 			.data('xml', {
-					"target": self.target,
+					"target": target,
 					"objectType": xmlElement
 			}).appendTo(self.menuContent);
 			// Disable the entry if its parent won't allow any more of this element type.
@@ -129,7 +137,7 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 				title : 'Add ' + elName
 			}).html(elName)
 			.data('xml', {
-					"target": self.target,
+					"target": target,
 					"objectType": xmlElement
 			}).appendTo(self.menuContent);
 		});
@@ -150,5 +158,6 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 		this.menuHeader.removeClass("disabled");
 		this.enabled = true;
 	}
+	
 	return this;
 };

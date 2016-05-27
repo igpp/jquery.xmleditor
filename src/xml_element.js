@@ -30,6 +30,8 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Array of element counts belonging to each choice block on this element definition
 	// Order of counts matches the order of choice blocks from the schema definition
 	this.choiceCount = [];
+	// Children elements
+	this.children = [];
 }
 
 XMLElement.prototype.constructor = XMLElement;
@@ -53,9 +55,15 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
 		this.domElement.className += ' xml_root_element';
-	
+
+	// Pass enumeration values from schema into editor
+	var nodeDef = this.editor.schemaTree.getElementDefinition(this.xmlNode[0]);
+	if(nodeDef.values.length > 0) {	// Enumeration
+		this.values = nodeDef.values;
+	}
+
 	this.insertDOMNode(relativeTo, prepend);
-	
+		
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
@@ -84,7 +92,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 
 	// Action buttons
 	if (!this.isRootElement)
-		this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
+		this.elementHeader.appendChild(this.addTopActions(this.objectType));
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});
@@ -146,6 +154,16 @@ XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 	this.nodeCount += delta;
 	var childName = childElement.objectType.ns + ":" + childElement.objectType.localName;
 	var choiceList = self.objectType.choices;
+	if(delta == 1) {	// Add child element
+		self.children.push(childElement);
+	}
+	if(delta == -1) {	// remove child element
+		for(var i = self.children.length; i--;) {
+			if(self.children[i] === childElement) {
+				self.children.splice(i, 1);
+			}
+		}
+	}
 	// Update child type counts
 	if (self.presentChildren[childName])
 		self.presentChildren[childName] += delta;
@@ -202,8 +220,10 @@ XMLElement.prototype.childCanBeRemoved = function(childType) {
 	if (!this.editor.options.enforceOccurs) return true;
 	// Not checking min for groups or choices to avoid irreplaceable children
 	var childName = childType.ns + ":" + childType.localName;
-	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs)
+	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs) {
 		return (this.presentChildren[childName] > this.objectType.occurs[childName].min);
+	}
+	
 	return true;
 };
 
@@ -240,17 +260,24 @@ XMLElement.prototype.initializeGUI = function () {
 };
 
 // Generate buttons for performing move and delete actions on this element
-XMLElement.prototype.addTopActions = function () {
+XMLElement.prototype.addTopActions = function (objectType) {
 	var self = this;
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
-	
+		
+	var infoButton = document.createElement('span');
+	infoButton.className = 'xml_info';
+	infoButton.id = this.domNodeID + '_del';
+	infoButton.appendChild(document.createTextNode('?'));
+	topActionSpan.appendChild(infoButton);
+
 	this.toggleCollapse = document.createElement('span');
 	this.toggleCollapse.className = 'toggle_collapse';
 	this.toggleCollapse.id = this.guiElementID + '_toggle_collapse';
 	this.toggleCollapse.appendChild(document.createTextNode('_'));
 	topActionSpan.appendChild(this.toggleCollapse);
 	
+	var moveDown = document.createElement('span');
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
 	moveDown.id = this.domNodeID + '_down';
@@ -265,6 +292,7 @@ XMLElement.prototype.addTopActions = function () {
 	
 	var deleteButton = document.createElement('span');
 	deleteButton.className = 'xml_delete';
+	if( ! self.childCanBeRemoved(objectType)) deleteButton.className += ' ui-helper-hidden';
 	deleteButton.id = this.domNodeID + '_del';
 	deleteButton.appendChild(document.createTextNode('X'));
 	topActionSpan.appendChild(deleteButton);
@@ -338,6 +366,8 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 				this.renderChild(childNode, recursive);
 				break;
 			case 3 : // text
+				if (this.values)	// Pass values into editor
+					childNode.values = this.values;
 				if (this.allowText && childNode.nodeValue.trim())
 					this.renderText(childNode);
 				break;

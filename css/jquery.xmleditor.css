@@ -46,9 +46,11 @@
 .xml_dialog .ui-dialog-titlebar-close {
 	position: absolute;
 	top: 50%;
-	margin: -10px 0 0 0;
+	margin: -6px 0 0 14px;
+	border-width: 1px 0 0 0;
 	padding: 1px;
-	height: 20px;
+	width: 27px;
+	height: 27px;
 }
 .xml_dialog .ui-dialog-content {
 	position: relative;
@@ -72,6 +74,7 @@
 	margin: .5em .4em .5em 0;
 	cursor: pointer;
 }
+
 .xml_dialog .ui-icon {
 	display: block;
 	padding: .4em .3em;

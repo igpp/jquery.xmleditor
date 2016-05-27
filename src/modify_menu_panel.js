@@ -16,9 +16,56 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	if (this.editor.options.enableDocumentStatusPanel) {
 		var self = this;
 		var documentStatusPanel = $(self.editor.options.documentStatusPanelDomId);
+		
 		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
 			.appendTo(documentStatusPanel);
 
+		if (self.editor.newButtonConfigs != null){
+			$.each(self.editor.newButtonConfigs, function(index, config){
+				var newButton;
+				if (config.id && ('createDomElement' in config) && !config.createDomElement) {
+					newButton = $("#" + config.id);
+				} else {
+					newButton = $("<input/>").attr({
+						id : config.id,
+						'type' : 'button',
+						'class' : config.cssClass || submitButtonClass,
+						name : config.name || 'submit',
+						value : config.label || 'Import'
+					}).appendTo(documentStatusPanel);
+				}
+
+				newButton.click(function() {
+					self.editor.loadDocument(null, null);
+					return false;
+				});
+			});
+		}
+		documentStatusPanel.appendTo(this.menuColumn);
+
+		if (self.editor.importButtonConfigs != null){
+			$.each(self.editor.importButtonConfigs, function(index, config){
+				var importButton;
+				if (config.id && ('createDomElement' in config) && !config.createDomElement) {
+					importButton = $("#" + config.id);
+				} else {
+					importButton = $("<input/>").attr({
+						id : config.id,
+						'type' : 'button',
+						'class' : config.cssClass || submitButtonClass,
+						name : config.name || 'submit',
+						value : config.label || 'Import'
+					}).appendTo(documentStatusPanel);
+				}
+
+				importButton.click(function() {
+					self.editor.importXML();
+					return false;
+				});
+			});
+		}
+		documentStatusPanel.appendTo(this.menuColumn);
+		
 		if (self.editor.submitButtonConfigs != null){
 			$.each(self.editor.submitButtonConfigs, function(index, config){
 				var submitButton;

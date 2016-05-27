@@ -67,6 +67,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input.type = 'date';
 		input.id = inputID;
 		input.className = 'xml_date';
+		input.placeholder="2016-04-05";
 		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		
@@ -77,10 +78,13 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			// Some browsers support the date input type.  If not, it should behaves as text
 			input.type = 'date';
 			input.className = 'xml_date';
+			input.placeholder="2016-04-05";
 		} else if (this.objectType.type == 'dateTime') {
 			// May not be supported by browsers yet
 			input.type = 'datetime';
 			input.className = 'xml_datetime';
+			input.placeholder="2016-04-05T12:34:00";
+			$(input).datetimeEntry({datetimeFormat: 'Y-O-DTH:M:S'});
 		} else {
 			// All other types as text for now
 			input.type = 'text';

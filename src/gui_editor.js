@@ -78,6 +78,9 @@ GUIEditor.prototype._initEventBindings = function() {
 	}).on('click', '.top_actions .xml_delete', function(event){
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'));
 		event.stopPropagation();
+	}).on('click', '.top_actions .xml_info', function(event){
+		self.infoElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'));
+		event.stopPropagation();
 	}).on('click', '.toggle_collapse', function(event){
 		$(this).parents('.' + xmlElementClass).first().data('xmlObject').toggleCollapsed();
 		event.stopPropagation();
@@ -275,6 +278,29 @@ GUIEditor.prototype.deselect = function() {
 	return this;
 };
 
+// Display information on selected element
+GUIEditor.prototype.infoSelected = function() {
+	if (this.selectedNode == null)
+		return this;
+
+	if (this.selectedNode instanceof XMLElement) {
+		this.inforElement(this.selectedNode);
+	} else {
+		alert("Info on not an element");
+	}
+	return this;
+};
+
+// Display information on selected element
+GUIEditor.prototype.infoElement = function(xmlElement) {
+	if( ! xmlElement) return this;
+
+	$("<p>" + xmlElement.objectType.documentation + "</p>").dialog({modal: true, dialogClass: 'xml_dialog', closeText: "X", title: xmlElement.objectType.localName});
+		// .dialog({modal: true, dialogClass: 'xml_dialog', resizable : false, title: xmlElement.objectType.localName, height: 180});
+
+	return this;
+};
+
 // Delete the selected element or attribute
 GUIEditor.prototype.deleteSelected = function() {
 	if (this.selectedNode == null)
@@ -349,16 +375,22 @@ GUIEditor.prototype.afterDeleteSelection = function(xmlNode) {
 
 // Move the currently selected element by x number of positions
 GUIEditor.prototype.moveSelected = function(up) {
+	console.log("move selected");
 	var selectedTextNode = $(".selected." + xmlTextClass);
-	if (selectedTextNode.length > 0)
-		return this.moveNode(selectedTextNode.data("xmlObject"), up);
+	if (selectedTextNode.length > 0) {
+		return this.moveNode(xmlElement, up);		
+	}
 	return this.moveNode(this.selectedNode, up);
 };
 
-// Move xmlObject by x number of positions
+// Move xmlObject by x number of positions - do not move if it cannot be deleted
 GUIEditor.prototype.moveNode = function(xmlObject, up) {
 	if (xmlObject == null)
 		return this;
+	var parent = xmlObject.parentElement;
+	if (!parent || !(parent instanceof XMLElement) || !parent.childCanBeRemoved(xmlObject.objectType))
+		return this;
+	
 	var result = up? xmlObject.moveUp() : xmlObject.moveDown();
 	if (result) {
 		this.editor.xmlState.documentChangedEvent();

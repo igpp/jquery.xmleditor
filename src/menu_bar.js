@@ -25,6 +25,18 @@ function MenuBar(editor) {
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				label : 'New',
+				enabled : true,
+				binding : "ctrl+alt+n",
+				action : function() { self.editor.loadDocument(null, null); }
+			}, {
+				label : self.editor.options.importLabel,	// Open
+				enabled : true,
+				binding : "ctrl+alt+o",
+				action : function() {
+					self.editor.importXML.call(self.editor)
+				}
+			}, {
 				label : 'Submit to Server',
 				enabled : defaultSubmitConfig != null,
 				binding : "ctrl+alt+s",
@@ -32,11 +44,11 @@ function MenuBar(editor) {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
 			}, {
-				label : 'Export',
+				label : self.editor.options.exportLabel,
 				enabled : (typeof(Blob) !== undefined),
 				binding : "ctrl+alt+e",
 				action : $.proxy(self.editor.exportXML, self.editor)
-			} ]
+			}]
 	}, {
 		label : 'Edit',
 		enabled : true,
@@ -334,6 +346,10 @@ MenuBar.prototype.activateMenu = function(event) {
 // Builds the menu and attaches it to the editor
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
+	// For file selection
+	this.menuBarContainer = $("<input id='import-file-select' type='file' style='visibility: hidden;'>").appendTo(parentElement);
+	
+	// Menu bar
 	this.menuBarContainer = $("<div/>").addClass(xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
