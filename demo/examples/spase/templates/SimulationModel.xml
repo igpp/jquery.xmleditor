@@ -1,0 +1,16 @@
+<Spase xmlns="http://www.spase-group.org/data/schema">
+  <Version>2.2.0</Version>
+  <SimulationModel>
+    <ResourceID />
+    <ResourceHeader>
+      <ResourceName />
+      <ReleaseDate />
+      <Description />
+      <Contact>
+        <PersonID />
+        <Role>ArchiveSpecialist</Role>
+      </Contact>
+    </ResourceHeader>
+    <SimulationType>Hybrid</SimulationType>
+  </SimulationModel>
+</Spase>

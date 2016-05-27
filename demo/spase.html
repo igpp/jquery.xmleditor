@@ -13,7 +13,7 @@
 <script src="lib/json2.js"></script>
 <script src="lib/cycle.js"></script>
 <script src="lib/jquery.autosize-min.js"></script>
-<script src="xsd/xsd2json.js"></script>
+<script src="lib/xsd2json.js"></script>
 <script src="jquery.xmleditor.js"></script>
 <script src="lib/jquery.plugin.min.js"></script>
 <script src="lib/jquery.datetimeentry.min.js"></script>
@@ -38,7 +38,7 @@
 	</div>
 	<script>
 		$(function() {
-			var extractor = new Xsd2Json("spase-2_2_6.xsd", {"schemaURI":"http://igpp.github.io/xmleditor/demo/examples/spase/schema/"});
+			var extractor = new Xsd2Json("spase-2_2_6.xsd", {"schemaURI":"http://spase-group.org/data/schema/"});
 			// var extractor = new Xsd2Json("spase-2_2_6.xsd", {"schemaURI":"spase/"});
 
 			$("#xml_editor").xmlEditor({
@@ -46,7 +46,7 @@
 				schemaName : "spase 2.2.6",
 				libPath: 'lib/',
 				templateOptions: {
-					templatePath: 'demo/examples/spase/templates/',
+					templatePath: 'examples/spase/templates/',
 					templates: [
 						{ filename: 'blank.xml', title: "Blank", description: 'An empty document.', icon_class: 'fa fa-file-text-o', icon_url: '' },
 						{ filename: 'Annotation.xml', title: "Annotation", description: 'Information which is explanatory or descriptive which is associated with another resource.', icon_class: 'fa fa-commenting-o' },

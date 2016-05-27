@@ -1,15 +1,23 @@
-# jquery.xmleditor
-A web browser based XML editor.   It provides a general use graphical tool for creating new or modifying existing XML documents in your web browser.  Information is extracted from an XML schema (XSD file) to provide the user with information about what elements, subelements and attributes are available at different points in the structure, and a GUI based means of adding or removing them from the document.
+# xmleditor
+A web browser based XML editor. It provides a general use graphical tool 
+for creating new or modifying existing XML documents in your web 
+browser. Information is extracted from an XML schema (XSD file) to 
+provide the user with information about what elements, subelements and 
+attributes are available at different points in the structure, and a GUI 
+based means of adding or removing them from the document. 
 
-Additionally, this project includes a tool for generating JSON objects from XML schemas, which can either be directly used in browsers or precompiled (see xsd/xsd2json.js).
+Additionally, this project includes a tool for generating JSON objects 
+from XML schemas, which can either be directly used in browsers or 
+precompiled (see xsd/xsd2json.js). 
 
-Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
+This project is based on [jquery.xmleditor](https://github.com/UNC-Libraries/jquery.xmleditor) 
+and extends the capabilities of the editor by adding additional 
+features. 
 
-And here's a [demo starting from an existing xml file](http://unc-libraries.github.com/jquery.xmleditor/demo/mods.html)
+Try it out in our [xmleditor demo page](http://igpp.github.com/xmleditor) using the MODS 3.4 schema. 
 
-This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
-This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
-For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled repository.
+This project was developed as part of [NASA](https://nasa.gov/) sponsored research. 
+The development work was performed at [UCLA](http://epss.ucla.edu). 
 
 ## Browser support
 The editor should work in current versions of Chrome, Firefox, Safari, Opera, and IE9-10.  Performance will vary.  IE7-8 are mostly functional, although not all features work.
@@ -23,6 +31,8 @@ The editor should work in current versions of Chrome, Firefox, Safari, Opera, an
 - Export the document to a file in web browsers that support it
 - Keyboard shortcuts for navigation and other operations
 - Standalone tool for building JSON representations of XML schemas (see the xsd/ folder in this project)
+- Import local files into the editor (supported when editor is hosted)
+- Contextual help information is extracted from the schema.
 
 ## How to use
 
@@ -175,12 +185,12 @@ Providing a submitButtonConfigs option will override the creation of the standar
 - undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.
 
 ### Building the plugin yourself
-If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
+If you wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
 Note: You'll need the sprockets gem installed for the rake task to complete properly.
 
 License Information
 ---------
-Copyright 2013 The University of North Carolina at Chapel Hill
+Copyright 2016 The Regents of the University of California
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,16 +206,12 @@ limitations under the License.
 
 Authors
 ---------
-[Ben Pennell](https://github.com/bbpennel)
-
-[Mike Daines](https://github.com/mdaines)
-
-[Dean Farrell](https://github.com/lfarrell)
+[Todd King](https://github.com/toddking)
 
 Attribution
 ------
-
 [jquery](http://jquery.com/)
 [json2.js and cycle.js](https://github.com/douglascrockford/JSON-js)
 [Cloud9 IDE](https://github.com/ajaxorg/cloud9)
 [jquery.autosize.js](http://www.jacklmoore.com/autosize/)
+[jquery.xmleditor](https://github.com/UNC-Libraries/jquery.xmleditor)

@@ -1,0 +1,16 @@
+<Spase xmlns="http://www.spase-group.org/data/schema">
+  <Version>2.2.6</Version>
+  <Annotation>
+    <ResourceID />
+    <ResourceHeader>
+      <ResourceName />
+      <ReleaseDate />
+      <Description />
+      <Contact>
+        <PersonID />
+        <Role>ArchiveSpecialist</Role>
+      </Contact>
+    </ResourceHeader>
+    <AnnotationType>Anomaly</AnnotationType>
+  </Annotation>
+</Spase>

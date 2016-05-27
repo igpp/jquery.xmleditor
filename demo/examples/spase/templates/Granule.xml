@@ -1,0 +1,14 @@
+<Spase xmlns="http://www.spase-group.org/data/schema">
+  <Version>2.2.6</Version>
+  <Granule>
+    <ResourceID />
+    <ReleaseDate />
+    <ParentID />
+    <StartDate />
+    <StopDate />
+    <Source>
+      <SourceType>Ancillary</SourceType>
+      <URL />
+    </Source>
+  </Granule>
+</Spase>

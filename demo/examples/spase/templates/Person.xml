@@ -1,0 +1,9 @@
+<Spase xmlns="http://www.spase-group.org/data/schema">
+  <Version>2.2.6</Version>
+  <Person>
+    <ResourceID />
+    <ReleaseDate />
+    <PersonName />
+    <OrganizationName />
+  </Person>
+</Spase>

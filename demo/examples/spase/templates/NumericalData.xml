@@ -1,0 +1,23 @@
+<Spase xmlns="http://www.spase-group.org/data/schema">
+  <Version>2.2.6</Version>
+  <NumericalData>
+    <ResourceID />
+    <ResourceHeader>
+      <ResourceName />
+      <ReleaseDate />
+      <Description />
+      <Contact>
+        <PersonID />
+        <Role>ArchiveSpecialist</Role>
+      </Contact>
+    </ResourceHeader>
+    <AccessInformation>
+      <RepositoryID />
+      <AccessURL>
+        <URL />
+      </AccessURL>
+      <Format>AVI</Format>
+    </AccessInformation>
+    <MeasurementType>ActivityIndex</MeasurementType>
+  </NumericalData>
+</Spase>
