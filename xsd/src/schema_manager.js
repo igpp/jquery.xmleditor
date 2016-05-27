@@ -82,6 +82,19 @@ SchemaManager.prototype.importAjax = function(url, callback, failedLocalAttempt)
 	});
 };
 
+SchemaManager.prototype.importFile = function(file, callback) {
+	var self = this;
+
+	if( ! FileReader) alert("FileReader not available. Unable to load local files.");
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var contents = reader.result;
+		var xsdDocument = $.parseXML(content).documentElement;
+		callback.call(self, xsdDocument, url);
+	};
+	reader.readAsText(new File(schemaPath));
+};
+
 SchemaManager.prototype.computeSchemaLocation = function(url, parentSchema) {
 	if (!url)
 		return null;
